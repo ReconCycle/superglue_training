@@ -17,10 +17,10 @@ from models.superpoint import SuperPoint
 from models.superglue import SuperGlue
 from utils.common import increment_path, init_seeds, clean_checkpoint, reduce_tensor, download_base_files, debug_image_plot, time_synchronized, test_model, ModelEMA
 from utils.preprocess_utils import torch_find_matches
-from utils.dataset import COCO_loader, COCO_valloader, collate_batch
+from utils.dataset import COCO_loader, collate_batch
 from torch.utils.tensorboard import SummaryWriter
 
-def change_lr(epoch, config, optimizer):
+def change_lr(epoch, config, optimizer, results_file=None):
     if epoch >= config['optimizer_params']['step_epoch']:
         curr_lr = config['optimizer_params']['lr']
         changed_lr = curr_lr * (config['optimizer_params']['step_value'] ** (epoch-config['optimizer_params']['step_epoch']))
@@ -30,10 +30,18 @@ def change_lr(epoch, config, optimizer):
         g['lr'] = changed_lr
         c_lr = g['lr']
         print("Changed learning rate to {}".format(c_lr))
+        if results_file is not None:
+            results_file.write("Changed learning rate to {}\n".format(c_lr))
+            results_file.flush()
+
 
 def train(config, rank):
     is_distributed = (rank >=0)
     save_dir = Path(config['train_params']['save_dir'])
+    if save_dir.is_dir():
+        print(f"{save_dir} already exists! exiting...")
+        return
+        
     weight_dir = save_dir / "weights"
     weight_dir.mkdir(parents=True, exist_ok=True)
     results_file = None 
@@ -98,7 +106,8 @@ def train(config, rank):
                                             pin_memory=True)
     num_batches = len(train_dataloader)
     if rank in [-1, 0]:
-        val_dataset = COCO_valloader(config['dataset_params'])
+        # val_dataset = COCO_valloader(config['dataset_params'])
+        val_dataset = COCO_loader(config['dataset_params'], typ="val")
         val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=1,
                                             num_workers=0,
                                             sampler=None,
@@ -110,7 +119,7 @@ def train(config, rank):
     if rank in [-1, 0]: print("Started training for {} epochs".format(num_epochs))
     print("Number of batches: {}".format(num_batches))
     warmup_iters = config['optimizer_params']['warmup_epochs'] * num_batches
-    change_lr(start_epoch, config, optimizer)
+    change_lr(start_epoch, config, optimizer, results_file=results_file)
     for epoch in range(start_epoch, num_epochs):
         print("Started epoch: {} in rank {}".format(epoch + 1, rank))
         superglue_model.train()
@@ -177,9 +186,10 @@ def train(config, rank):
                 mem = '%.3gG' % (torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0)  # (GB)
                 s = ('%10s' * 2 + '%10.4g' * 7) % (str(epoch),mem, i, *mloss)
                 pbar.set_description(s)
-                if ((i+1) % config['train_params']['log_interval']) == 0:
+                if ((i+1) % config['train_params']['log_interval']) == 0 or i == 0:
                     write_str = "Epoch: {} Iter: {}, Loss: {}\n".format(epoch, i, mloss[0].item())
                     results_file.write(write_str)
+                    results_file.flush()
                 if ((i+1) % 2000) == 0:
                     ckpt = {'epoch': epoch,
                             'iter': i,
@@ -198,7 +208,7 @@ def train(config, rank):
                     eval_superglue = ema.ema
                 else:
                     eval_superglue = superglue_model.module if is_distributed else superglue_model
-                results = test_model(val_dataloader, superpoint_model, eval_superglue, config['train_params']['val_images_count'], device)
+                results = test_model(val_dataloader, superpoint_model, eval_superglue, config['train_params']['val_images_count'], device, results_file=results_file)
             ckpt = {'epoch': epoch,
                     'iter': -1,
                     'ema': ema.ema.state_dict() if ema else None,
@@ -212,11 +222,14 @@ def train(config, rank):
                 wandb.save(str(save_dir / "results.txt"))
             if results['weight_score'] > best_val_score:
                 best_val_score = results['weight_score']
-                print("Saving best model at epoch {} with score {}".format(epoch, best_val_score))
+                best_model_str = "Saving best model at epoch {} with score {}".format(epoch, best_val_score)
+                print(best_model_str)
+                results_file.write(best_model_str + "\n")
+                results_file.flush()
                 torch.save(ckpt, weight_dir / 'best.pt')
                 if use_wandb:
                     wandb.save(str(weight_dir / 'best.pt'))
-        change_lr(epoch, config, optimizer)
+        change_lr(epoch, config, optimizer, results_file=results_file)
     if rank > 0:
         dist.destroy_process_group()
 
@@ -237,7 +250,7 @@ if __name__ == "__main__":
         if "cpu" not in device: torch.cuda.set_device(device)
     with open(opt.config_path, 'r') as file:
         config = yaml.full_load(file)
-    config["train_params"]['save_dir'] = increment_path(Path(config['train_params']['output_dir']) / config['train_params']['experiment_name'])
+    config["train_params"]['save_dir'] = increment_path(Path(config['train_params']['output_dir']) / config['train_params']['experiment_name'], exist_ok=False)
     if opt.local_rank in [0, -1]:
         for i,k in config.items():
             print("{}: ".format(i))

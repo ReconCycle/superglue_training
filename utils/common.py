@@ -744,7 +744,7 @@ def find_pred(inp, superpoint_model, superglue_model):
     pred = {**pred, **superglue_model(data)}
     return pred
 
-def test_model(test_loader, superpoint_model, superglue_model,val_count, device, min_matches=12):
+def test_model(test_loader, superpoint_model, superglue_model,val_count, device, min_matches=12, results_file=None):
     superpoint_model.eval()
     superglue_model.eval()
     all_recall, all_precision, all_error_dlt, all_error_ransac = [], [], [], []
@@ -814,6 +814,19 @@ def test_model(test_loader, superpoint_model, superglue_model,val_count, device,
     print('AUC@5\t AUC@10\t AUC@25\t Prec\t Recall\t')
     print('{:.2f}\t {:.2f}\t {:.2f}\t {:.2f}\t {:.2f}\t'.format(
             aucs_ransac[0], aucs_ransac[1], aucs_ransac[2], prec, rec))
+
+    if results_file is not None:
+        results_file.write("For DLT results...\n")
+        results_file.write("AUC@5\t AUC@10\t AUC@25\t Prec\t Recall\t\n")
+        results_file.write('{:.2f}\t {:.2f}\t {:.2f}\t {:.2f}\t {:.2f}\t\n'.format(
+        aucs_dlt[0], aucs_dlt[1], aucs_dlt[2], prec, rec))
+        results_file.write("For homography results...\n")
+        results_file.write('AUC@5\t AUC@10\t AUC@25\t Prec\t Recall\t\n')
+        results_file.write('{:.2f}\t {:.2f}\t {:.2f}\t {:.2f}\t {:.2f}\t\n'.format(
+            aucs_ransac[0], aucs_ransac[1], aucs_ransac[2], prec, rec))
+        results_file.flush()
+
+    
     return results_dict
 
 

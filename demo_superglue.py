@@ -62,7 +62,9 @@ if __name__ == '__main__':
         description='SuperGlue demo',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
-        '--input', type=str, default='0',
+        '--input', 
+        type=str, 
+        default='/home/sruiz/datasets2/reconcycle/2023-02-20_hca_backs_UNLABELED/hca_0/',
         help='ID of a USB webcam, URL of an IP camera, '
              'or path to an image directory or movie file')
     parser.add_argument(
