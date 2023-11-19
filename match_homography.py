@@ -6,6 +6,7 @@ import matplotlib.cm as cm
 import torch
 import cv2
 import os
+import math
 from models.matching import Matching
 from utils.common import (compute_pose_error, compute_epipolar_error,
                           estimate_pose, make_matching_plot,
@@ -229,6 +230,24 @@ if __name__ == '__main__':
             sort_index = np.argsort(mconf)[::-1][0:4]
             est_homo_dlt = cv2.getPerspectiveTransform(mkpts0[sort_index, :], mkpts1[sort_index, :])
             est_homo_ransac, _ = cv2.findHomography(mkpts0, mkpts1, method=cv2.RANSAC, maxIters=3000)
+
+            # ! Seb's code
+            # get rotation from homography
+            
+            def angle_from_homo(homo):
+                # https://stackoverflow.com/questions/58538984/how-to-get-the-rotation-angle-from-findhomography
+                u, _, vh = np.linalg.svd(homo[0:2, 0:2])
+                R = u @ vh
+                angle = math.atan2(R[1,0], R[0,0])
+                return angle
+            
+            angle_est = angle_from_homo(est_homo_ransac)
+            angle_gt = angle_from_homo(homo_matrix)
+            print("angle_est", angle_est, "angle_gt", angle_gt)
+
+            # ! end: Seb's code
+
+
             corner_points_dlt = cv2.perspectiveTransform(np.reshape(corner_points, (-1, 1, 2)), est_homo_dlt).squeeze(1)
             corner_points_ransac = cv2.perspectiveTransform(np.reshape(corner_points, (-1, 1, 2)), est_homo_ransac).squeeze(1)
             corner_points_gt = cv2.perspectiveTransform(np.reshape(corner_points, (-1, 1, 2)), homo_matrix).squeeze(1)
