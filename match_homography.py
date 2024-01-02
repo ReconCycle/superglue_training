@@ -14,6 +14,8 @@ from utils.common import (compute_pose_error, compute_epipolar_error,
                           rotate_intrinsics, rotate_pose_inplane, compute_pixel_error,
                           scale_intrinsics, weights_mapping, download_base_files, download_test_images)
 from utils.preprocess_utils import torch_find_matches
+from rich import print
+import albumentations as alb
 
 torch.set_grad_enabled(False)
 
@@ -44,6 +46,10 @@ if __name__ == '__main__':
     parser.add_argument(
         '--resize_float', action='store_true',
         help='Resize the image after casting uint8 to float')
+    
+    parser.add_argument(
+        '--apply_aug', action='store_true',
+        help='apply augmentations')
 
     parser.add_argument(
         '--superglue', default='coco_homo',
@@ -161,6 +167,16 @@ if __name__ == '__main__':
     if opt.viz:
         print('Will write visualization images to',
               'directory \"{}\"'.format(output_dir))
+    
+    #! Seb's code:
+    if opt.apply_aug:
+        aug_list = [alb.OneOf([alb.MotionBlur(p=0.5), alb.GaussNoise(p=0.6)], p=0.5),
+                    alb.RGBShift(r_shift_limit=40, g_shift_limit=40, b_shift_limit=40, p=0.5),
+                    alb.RandomBrightnessContrast(p=0.5),
+                    ]
+        aug_func = alb.Compose(aug_list, p=0.65)
+    #! End, Seb's code.
+    
     timer = AverageTimer(newline=True)
     for i, info in enumerate(homo_pairs):
         split_info = info.strip().split(' ')
@@ -183,8 +199,9 @@ if __name__ == '__main__':
         if not (do_match or do_eval or do_viz or do_viz_eval):
             timer.print('Finished pair {:5} of {:5}'.format(i, len(homo_pairs)))
             continue
+
         image0, image1, inp0, inp1, scales0, homo_matrix = read_image_with_homography(input_dir / image_name, homo_matrix, device,
-                                                opt.resize, 0, opt.resize_float)
+                                                opt.resize, 0, opt.resize_float, apply_aug=opt.apply_aug, aug_func=aug_func)
 
         if image0 is None or image1 is None:
             print('Problem reading image pair: {}'.format(
@@ -238,12 +255,21 @@ if __name__ == '__main__':
                 # https://stackoverflow.com/questions/58538984/how-to-get-the-rotation-angle-from-findhomography
                 u, _, vh = np.linalg.svd(homo[0:2, 0:2])
                 R = u @ vh
-                angle = math.atan2(R[1,0], R[0,0])
+                angle = math.atan2(R[1,0], R[0,0]) # angle between [-pi, pi)
                 return angle
+            
+            def difference_angle(angle1, angle2):
+                difference = (angle1 - angle2) % (2*np.pi)
+                difference = np.where(difference > np.pi, difference - 2*np.pi, difference)
+                return difference
+
+
             
             angle_est = angle_from_homo(est_homo_ransac)
             angle_gt = angle_from_homo(homo_matrix)
-            print("angle_est", angle_est, "angle_gt", angle_gt)
+            angle_diff = np.abs(difference_angle(angle_est, angle_gt))
+            # print("angle_est", angle_est, "angle_gt", angle_gt)
+            print("difference", np.round(angle_diff, 4))
 
             # ! end: Seb's code
 
@@ -261,7 +287,8 @@ if __name__ == '__main__':
             out_eval = {'error_dlt': error_dlt,
                         'error_ransac': error_ransac,
                         'precision': precision,
-                        'recall': recall
+                        'recall': recall,
+                        'angle': angle_diff,
                         }
             np.savez(str(eval_path), **out_eval)
             timer.update('eval')
@@ -299,6 +326,7 @@ if __name__ == '__main__':
         errors_ransac = []
         precisions = []
         recall = []
+        angle = []
         matching_scores = []
         for info in homo_pairs:
             split_info = info.strip().split(' ')
@@ -312,6 +340,7 @@ if __name__ == '__main__':
             errors_ransac.append(results['error_ransac'])
             precisions.append(results['precision'])
             recall.append(results['recall'])
+            angle.append(results['angle'])
         thresholds = [5, 10, 25]
         aucs_dlt = pose_auc(errors_dlt, thresholds)
         aucs_ransac = pose_auc(errors_ransac, thresholds)
@@ -319,6 +348,9 @@ if __name__ == '__main__':
         aucs_ransac = [100.*yy for yy in aucs_ransac]
         prec = 100.*np.mean(precisions)
         rec = 100.*np.mean(recall)
+        angle_mean = np.mean(angle)
+        angle_std = np.std(angle)
+        angle_median = np.median(angle)
         print('Evaluation Results (mean over {} pairs):'.format(len(homo_pairs)))
         print("For DLT results...")
         print('AUC@5\t AUC@10\t AUC@25\t Prec\t Recall\t')
@@ -328,3 +360,6 @@ if __name__ == '__main__':
         print('AUC@5\t AUC@10\t AUC@25\t Prec\t Recall\t')
         print('{:.2f}\t {:.2f}\t {:.2f}\t {:.2f}\t {:.2f}\t'.format(
             aucs_ransac[0], aucs_ransac[1], aucs_ransac[2], prec, rec))
+        print("angles:")
+        print("med\t mean\t std\t")
+        print('{:.3}\t {:.3}\t {:.3}\t'.format(angle_median, angle_mean, angle_std))

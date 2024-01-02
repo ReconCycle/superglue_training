@@ -64,7 +64,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--input', 
         type=str, 
-        default='/home/sruiz/datasets2/reconcycle/2023-02-20_hca_backs_UNLABELED/hca_0/',
+        default='/home/sruiz/datasets2/reconcycle/2023-02-20_hca_backs_processed/hca_0/',
         help='ID of a USB webcam, URL of an IP camera, '
              'or path to an image directory or movie file')
     parser.add_argument(
@@ -87,7 +87,10 @@ if __name__ == '__main__':
              'dimension, if -1, do not resize')
 
     parser.add_argument(
-        '--superglue', default='coco_homo',
+        '--superglue', 
+        # default="output/train/default/weights/best.pt",
+        # default='coco_homo',
+        default='indoor',
         help='SuperGlue weights')
     parser.add_argument(
         '--max_keypoints', type=int, default=-1,
@@ -227,7 +230,7 @@ if __name__ == '__main__':
 
         if not opt.no_display:
             cv2.imshow('SuperGlue matches', out)
-            key = chr(cv2.waitKey(1) & 0xFF)
+            key = chr(cv2.waitKey(0) & 0xFF)
             if key == 'q':
                 vs.cleanup()
                 print('Exiting (via q) demo_superglue.py')

@@ -1,3 +1,215 @@
+# Notes Seb
+
+`get_perspective_coco.py` generates perspecives from coco_config
+
+# Debugging with `match_homograph.py` on tiny dataset `output_2023-11-10_100` with:
+```
+python3 match_homography.py --eval --superglue indoor --input_homography assets/homo_output_2023-11-10_100.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-11-10_100
+```
+compare with:
+```
+python3 match_homography.py --eval --superglue output/train/default/weights/best.pt --input_homography assets/homo_output_2023-11-10_100.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-11-10_100
+```
+
+# Evaluation on `output_2023-09-25_40000` val set with:
+
+This IS using my 360deg rotations!
+
+
+NOTE: we limit to 500 otherwise it takes a while
+
+{indoor, outdoor, coco_homo, output/train/default/weights/best.pt}
+
+## output/train/default/weights/best.pt
+```
+python3 match_homography.py --eval --superglue output/train/default/weights/best.pt --input_homography assets/homo_output_2023-09-25_40000.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-09-25_40000 --max_length 500
+```
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+0.65     2.07    5.48    67.78   79.78
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+23.38    34.99   51.73   67.78   79.78
+
+
+## indoor
+```
+python3 match_homography.py --eval --superglue indoor --input_homography assets/homo_output_2023-09-25_40000.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-09-25_40000 --max_length 500
+```
+Evaluation Results (mean over 500 pairs):
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+0.25     0.65    2.70    48.67   62.51
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+16.36    27.34   42.90   48.67   62.51
+
+## outdoor
+```
+python3 match_homography.py --eval --superglue outdoor --input_homography assets/homo_output_2023-09-25_40000.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-09-25_40000 --max_length 500
+```
+Evaluation Results (mean over 500 pairs):
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+0.24     0.78    2.94    38.18   45.21
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+10.93    17.69   26.45   38.18   45.21
+
+# Evaluation on `coco_test_images` COCO2017 test set (Mean over 199 pairs):
+
+This ISN'T using my 360deg rotations!
+
+## output/train/default/weights/best.pt
+
+```
+python3 match_homography.py --eval --superglue output/train/default/weights/best.pt --input_homography assets/coco_test_images_homo.txt --input_dir assets/coco_test_images
+```
+
+```
+Evaluation Results (mean over 199 pairs):
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+0.91     2.49    6.18    75.44   79.53
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+34.66    51.72   70.58   75.44   79.53
+```
+
+## indoor
+
+```
+python3 match_homography.py --eval --superglue indoor --input_homography assets/coco_test_images_homo.txt --input_dir assets/coco_test_images
+```
+Evaluation Results (mean over 199 pairs):
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+0.00     0.38    2.60    73.35   94.59
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+30.22    47.72   68.11   73.35   94.59
+
+## outdoor
+
+```
+python3 match_homography.py --eval --superglue outdoor --input_homography assets/coco_test_images_homo.txt --input_dir assets/coco_test_images
+```
+Evaluation Results (mean over 199 pairs):
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+0.31     1.49    6.99    89.12   99.65
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall
+32.19    49.15   71.56   89.12   99.65
+
+# Evaluation on `2023-02-20_hca_backs_processed`
+
+This IS using my 360deg rotations!
+
+## output/train/default/weights/best.pt
+
+```
+python3 match_homography.py --eval --superglue output/train/default/weights/best.pt --input_homography assets/homo_2023-02-20_hca_backs_processed.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-02-20_hca_backs_processed
+```
+Evaluation Results (mean over 453 pairs):
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+0.00     0.00    1.07    80.54   97.44  
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+4.31     19.64   54.72   80.54   97.44  
+angles:
+med      mean    std    
+0.00553  0.0108  0.0213
+
+
+## indoor
+```
+python3 match_homography.py --eval --superglue indoor --input_homography assets/homo_2023-02-20_hca_backs_processed.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-02-20_hca_backs_processed
+```
+Evaluation Results (mean over 453 pairs):
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+0.00     0.00    0.00    59.38   67.65  
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+4.84     13.27   32.09   59.38   67.65  
+angles:
+med      mean    std    
+0.0117   0.191   0.458
+
+
+## outdoor
+```
+python3 match_homography.py --eval --superglue outdoor --input_homography assets/homo_2023-02-20_hca_backs_processed.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-02-20_hca_backs_processed
+```
+Evaluation Results (mean over 453 pairs):
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+0.00     0.00    0.00    39.95   41.79  
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+0.58     5.54    17.05   39.95   41.79  
+angles:
+med      mean    std    
+0.685    1.08    1.1 
+
+
+## coco_homo
+```
+python3 match_homography.py --eval --superglue coco_homo --input_homography assets/homo_2023-02-20_hca_backs_processed.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-02-20_hca_backs_processed
+```
+Evaluation Results (mean over 453 pairs):
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+0.00     0.00    0.24    28.98   30.17  
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+3.65     6.66    15.63   28.98   30.17  
+angles:
+med      mean    std    
+0.81     1.03    0.98
+
+
+# Evaluation on `2023-12-04_hcas_fire_alarms_sorted_cropped`
+
+## output/train/2023-11-18_superglue_model/weights/best.pt
+
+```
+python3 match_homography.py --eval --superglue output/train/2023-11-18_superglue_model/weights/best.pt --input_homography assets/2023-12-04_hcas_fire_alarms_sorted_cropped/homo.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-12-04_hcas_fire_alarms_sorted_cropped
+```
+
+```
+Evaluation Results (mean over 1632 pairs):
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+0.47     2.03    7.10    78.78   91.20  
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+34.62    54.15   75.57   78.78   91.20  
+angles:
+med      mean    std    
+0.00245  0.00741         0.0684 
+```
+
+## Now with augmentations:
+
+```
+python3 match_homography.py --eval --superglue output/train/2023-11-18_superglue_model/weights/best.pt --input_homography assets/2023-12-04_hcas_fire_alarms_sorted_cropped/homo.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-12-04_hcas_fire_alarms_sorted_cropped --apply_aug
+```
+
+```
+For DLT results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+0.63     2.05    7.15    69.90   nan    
+For homography results...
+AUC@5    AUC@10  AUC@25  Prec    Recall 
+27.77    47.79   70.62   69.90   nan    
+angles:
+med      mean    std    
+0.00313  0.0153  0.124 
+```
+
 #  SuperGlue - Reimplementation
 This repository contains training and evaluation code for Superglue model with homography pairs generated from COCO dataset. The code is adapted from the inference only [official implementation](https://github.com/magicleap/SuperGluePretrainedNetwork) released by MagicLeap
 

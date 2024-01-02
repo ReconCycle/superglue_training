@@ -44,8 +44,12 @@ from copy import deepcopy
 from pathlib import Path
 import torch
 from torch import nn
-import torch_scatter as ts
 
+try:
+    # for some reason this module is hard to import, and we only need it for training
+    import torch_scatter as ts
+except ImportError:
+    pass
 
 class LayerNorm(nn.Module):
     "Construct a layernorm module (See citation for details)."

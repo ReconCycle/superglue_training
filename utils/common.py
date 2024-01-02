@@ -403,12 +403,28 @@ def read_image(path, device, resize, rotation, resize_float):
     inp = frame2tensor(image, device)
     return image, inp, scales
 
-def read_image_with_homography(path, homo_matrix, device, resize, rotation, resize_float):
-    image = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
+def read_image_with_homography(path, homo_matrix, device, resize, rotation, resize_float, apply_aug=False, aug_func=None):
+    image = cv2.imread(str(path))
+    # image = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
     if image is None:
         return None, None, None
     w, h = image.shape[1], image.shape[0]
     warped_image = cv2.warpPerspective(image.copy(), homo_matrix, (w, h))
+
+    #! Seb's code:
+    if apply_aug:
+        def apply_augmentations(image1, image2):
+            image1_dict = {'image': image1}
+            image2_dict = {'image': image2}
+            result1, result2 = aug_func(**image1_dict), aug_func(**image2_dict)
+            return result1['image'], result2['image']
+        
+        image, warped_image = apply_augmentations(image, warped_image)
+
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    warped_image = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
+    #! end.
+
     w_new, h_new = process_resize(w, h, resize)
     scales = (float(w) / float(w_new), float(h) / float(h_new))
     if resize_float:
@@ -806,6 +822,7 @@ def test_model(test_loader, superpoint_model, superglue_model,val_count, device,
     results_dict = {'dlt_auc': aucs_dlt, 'ransac_auc': aucs_ransac, 'precision': prec, 'recall': rec, 'thresholds': thresholds}
     weight_score = weighted_score(results_dict)
     results_dict['weight_score'] = float(weight_score)
+    print("weight_score: {:.4f}".format(results_dict['weight_score']))
     print("For DLT results...")
     print('AUC@5\t AUC@10\t AUC@25\t Prec\t Recall\t')
     print('{:.2f}\t {:.2f}\t {:.2f}\t {:.2f}\t {:.2f}\t'.format(

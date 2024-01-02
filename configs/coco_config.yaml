@@ -3,8 +3,8 @@ train_params:
   experiment_name: default
   experiment_tag: default #name for experiment in wandb logging
   start_epoch: 0 #use -1 to resume the epoch number from restore_path ckpt given
-  batch_size: 32
-  num_epochs: 90
+  batch_size: 16 # 32 for 3090
+  num_epochs: 400
   sync_bn: false #whether to sync batch norm layer in distributed training setting
   restore_opt: true #whether to restore the optimizer states while resuming the training from given ckpt
   num_workers: 0 #number of dataloader workers
@@ -42,12 +42,16 @@ optimizer_params:
   step_value: 0.9440608762859234 #Determines the decay rate of learning rate after step_epoch. Curr value is for 40 epochs after which init lr will be divided by 10
 
 dataset_params:
-  # dataset_path: "/home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-11-10_100" #Path to COCO dataset that contains the 'train2017', 'val2017' and 'annotations' folder
-  dataset_path: "/home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-09-25_40000"
+  #Path to COCO dataset that contains the 'train2017', 'val2017' and 'annotations' folder
+  #! tiny debugging dataset:
+  # dataset_path: "/home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-11-10_100" 
+
+  #! real debugging dataset:
+  dataset_path: "/home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-12-01_40000"
   apply_color_aug: true #whether to apply photometric distortions
   image_height: 480 
   image_width: 640
-  resize_aspect: false #whether to resize the input image with aspect ratio maintained
+  resize_aspect: false #whether to resize the input image with aspect ratio maintained #! should I set this to false?
   augmentation_params:
     patch_ratio: 0.85 
     #All the below params are ranges for distortion. (0, Mentioned_value). 
@@ -56,6 +60,6 @@ dataset_params:
     perspective_y: 0.0008 #range of perspective-y component
     shear_ratio: 0.04 #shear ratio range
     shear_angle: 10 #shear direction range
-    rotation_angle: 360 #rotation angle range
+    rotation_angle: 180 #rotation angle range #! was 360 but it should be 360. look at function!
     scale: 0.6 #uniform scaling range
     translation: 0.6 #translation component range

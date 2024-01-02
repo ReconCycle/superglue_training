@@ -29,9 +29,10 @@ class COCO_loader(Dataset):
         self.images = self.coco_json.getImgIds()
         if self.apply_aug:
             import albumentations as alb
-            self.aug_list = [alb.OneOf([alb.RandomBrightness(limit=0.4, p=0.6), alb.RandomContrast(limit=0.3, p=0.7)], p=0.6),
+            self.aug_list = [# alb.OneOf([alb.RandomBrightness(limit=0.4, p=0.6), alb.RandomContrast(limit=0.3, p=0.7)], p=0.6),
                              alb.OneOf([alb.MotionBlur(p=0.5), alb.GaussNoise(p=0.6)], p=0.5),
-                             #alb.JpegCompression(quality_lower=65, quality_upper=100,p=0.4)
+                             alb.RGBShift(r_shift_limit=40, g_shift_limit=40, b_shift_limit=40, p=0.5), #! added by Seb
+                             alb.RandomBrightnessContrast(p=0.5),
                              ]
             self.aug_func = alb.Compose(self.aug_list, p=0.65)
 
@@ -50,7 +51,7 @@ class COCO_loader(Dataset):
         file_name = self.coco_json.loadImgs(ids=[img_id])[0]['file_name']
         file_path = os.path.join(self.images_path, file_name)
 
-        image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(file_path) #! seb: used to load as: cv2.IMREAD_GRAYSCALE
         if self.aspect_resize:
             image = resize_aspect_ratio(image, self.config['image_height'], self.config['image_width'])
             resize = False
@@ -79,6 +80,11 @@ class COCO_loader(Dataset):
             warped_resized = warped_image
         if self.apply_aug:
             orig_resized, warped_resized = self.apply_augmentations(orig_resized, warped_resized)
+
+        # ! seb: now convert to grayscale
+        orig_resized = cv2.cvtColor(orig_resized, cv2.COLOR_BGR2GRAY)
+        warped_resized = cv2.cvtColor(warped_resized, cv2.COLOR_BGR2GRAY)
+
         homo_matrix = scale_homography(homo_matrix, height, width, self.config['image_height'], self.config['image_width']).astype(np.float32)
         orig_resized = np.expand_dims(orig_resized, 0).astype(np.float32) / 255.0
         warped_resized = np.expand_dims(warped_resized, 0).astype(np.float32) / 255.0

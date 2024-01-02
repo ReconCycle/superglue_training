@@ -88,6 +88,11 @@ def torch_find_matches(src_keypoints1, src_keypoints2, homography, dist_thresh=3
         keypoints1 = src_keypoints1_projected[missing_indices_1, :]
         keypoints2 = src_keypoints2[missing_indices_2, :]
         distance = torch_cdist(keypoints1, keypoints2)
+        if distance.shape[1] == 0:
+            print("distance.shape", distance.shape)
+            print("something went wrong!")
+            continue
+
         min1 = torch.argmin(distance, 1)
         min2 = torch.argmin(distance, 0)
         intersect_indexes_2 = torch.where(min1[min2] == torch.arange(len(min2), device=min1.device))[0]
