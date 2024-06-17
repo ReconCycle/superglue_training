@@ -59,7 +59,7 @@ def get_perspective_mat(patch_ratio, center_x, center_y, pers_x, pers_y, shear_r
     trans_patch_corners = cv2.perspectiveTransform(np.reshape(patch_corners, (-1, 1, 2)), homography_matrix).squeeze(1)
     translation_matrix = get_translation_mat(image_height, image_width, trans, trans_patch_corners)
     homography_matrix = translation_matrix @ homography_matrix
-    return homography_matrix
+    return homography_matrix, rotation_angle_value
 
 def torch_cdist(keypoints1, keypoints2):
     diff = (keypoints1[:, None, :] - keypoints2[None, :, :]) ** 2
