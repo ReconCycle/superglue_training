@@ -47,7 +47,7 @@ dataset_params:
   # dataset_path: "/home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-11-10_100" 
 
   #! real debugging dataset:
-  dataset_path: "/home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-12-01_40000"
+  dataset_path: "/home/docker/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2024-21-06_excl_evens"
   apply_color_aug: true #whether to apply photometric distortions
   image_height: 480 
   image_width: 640

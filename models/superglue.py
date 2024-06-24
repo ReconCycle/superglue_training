@@ -257,6 +257,11 @@ class SuperGlue(nn.Module):
             return self.forward_train(data)
         desc0, desc1 = data['descriptors0'], data['descriptors1']
         kpts0, kpts1 = data['keypoints0'], data['keypoints1']
+
+        # print("desc shape", desc0.shape, desc1.shape) # [b, 256, m], [b, 256, n]
+        # print("kpts shape", kpts0.shape, kpts1.shape) # [b, m, 2], [b, n, 2]
+
+
         if kpts0.shape[1] == 0 or kpts1.shape[1] == 0:  # no keypoints
             shape0, shape1 = kpts0.shape[:-1], kpts1.shape[:-1]
             return {
@@ -269,18 +274,29 @@ class SuperGlue(nn.Module):
         kpts0 = normalize_keypoints(kpts0, data['image0'].shape)
         kpts1 = normalize_keypoints(kpts1, data['image1'].shape)
 
+        # print("kpts shape after normalise", kpts0.shape, kpts1.shape)# [b, m, 2], [b, n, 2]
+
         # Keypoint MLP encoder.
         desc0 = desc0 + self.kenc(kpts0, data['scores0'])
         desc1 = desc1 + self.kenc(kpts1, data['scores1'])
 
+        print("desc shape after mlp encoder", desc0.shape, desc1.shape) # [b, 256, m], [b, 256, n]
+
         # Multi-layer Transformer network.
         desc0, desc1 = self.gnn(desc0, desc1)
 
+        # print("desc shape after gnn", desc0.shape, desc1.shape) # [b, 256, m], [b, 256, n]
+
         # Final MLP projection.
         mdesc0, mdesc1 = self.final_proj(desc0), self.final_proj(desc1)
+
+        # print("mdesc shape after mlp proj", mdesc0.shape, mdesc1.shape) # [b, 256, m], [b, 256, n]
+
         # Compute matching descriptor distance.
         scores = torch.einsum('bdn,bdm->bnm', mdesc0, mdesc1)
         scores = scores / self.config['descriptor_dim']**.5
+
+        # print("scores shape", scores.shape) [b, m, n]
 
         # Run the optimal transport.
         scores = log_optimal_transport(
@@ -298,6 +314,9 @@ class SuperGlue(nn.Module):
         valid1 = mutual1 & valid0.gather(1, indices1)
         indices0 = torch.where(valid0, indices0, indices0.new_tensor(-1))
         indices1 = torch.where(valid1, indices1, indices1.new_tensor(-1))
+
+        # print("mscores shape", mscores0.shape, mscores1.shape) #[b, m], [b, n]
+        # print("indices shape", indices0.shape, indices1.shape) #[b, m], [b, n]
 
         return {
             'matches0': indices0, # use -1 for invalid match

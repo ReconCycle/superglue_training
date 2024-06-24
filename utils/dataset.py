@@ -31,10 +31,11 @@ class COCO_loader(Dataset):
             import albumentations as alb
             self.aug_list = [# alb.OneOf([alb.RandomBrightness(limit=0.4, p=0.6), alb.RandomContrast(limit=0.3, p=0.7)], p=0.6),
                              alb.OneOf([alb.MotionBlur(p=0.5), alb.GaussNoise(p=0.6)], p=0.5),
-                             alb.RGBShift(r_shift_limit=40, g_shift_limit=40, b_shift_limit=40, p=0.5), #! added by Seb
-                             alb.RandomBrightnessContrast(p=0.5),
+                             alb.RGBShift(r_shift_limit=40, g_shift_limit=40, b_shift_limit=40, p=0.8), #! added by Seb
+                            #  alb.RandomBrightnessContrast(p=0.5),
+                            alb.ColorJitter (brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3, always_apply=None, p=0.8)
                              ]
-            self.aug_func = alb.Compose(self.aug_list, p=0.65)
+            self.aug_func = alb.Compose(self.aug_list, p=1.0)
 
     def __len__(self):
         return len(self.images)
@@ -65,7 +66,7 @@ class COCO_loader(Dataset):
 
             np.random.seed(img_id)
 
-        homo_matrix = get_perspective_mat(self.aug_params['patch_ratio'], width//2, height//2, self.aug_params['perspective_x'], self.aug_params['perspective_y'], self.aug_params['shear_ratio'], self.aug_params['shear_angle'], self.aug_params['rotation_angle'], self.aug_params['scale'], self.aug_params['translation'])
+        homo_matrix, angle = get_perspective_mat(self.aug_params['patch_ratio'], width//2, height//2, self.aug_params['perspective_x'], self.aug_params['perspective_y'], self.aug_params['shear_ratio'], self.aug_params['shear_angle'], self.aug_params['rotation_angle'], self.aug_params['scale'], self.aug_params['translation'])
 
         if self.typ == "val":
             # set the state back to what it was originally
