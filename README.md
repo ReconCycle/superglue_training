@@ -2,6 +2,134 @@
 
 `get_perspective_coco.py` generates perspecives from coco_config
 
+# Results
+
+## superglue custom trained model
+
+```
+python match_homography_w_dataloader.py --eval True --superglue output/train/2024-06-26_superglue_model_evens_finished/weights/best.pt
+```
+
+```
+============================================
+evaluating: seen_test
+============================================
+dataset len: 90
+Evaluation Results (mean over 90 pairs):
+For DLT results...
+AUC@5	 AUC@10	 AUC@25	 Prec	 Recall	
+0.00	 2.05	 10.64	 79.36	 86.34	
+For homography results...
+AUC@5	 AUC@10	 AUC@25	 Prec	 Recall	
+35.39	 59.01	 80.67	 79.36	 86.34	
+angles abs:
+med	 mean	 std	
+0.00323	 0.00703	 0.0128	
+angles square:
+med	 mean	 std	
+1.05e-05	 0.000212	 0.000967	
+
+
+============================================
+evaluating: unseen_test
+============================================
+dataset len: 837
+Evaluation Results (mean over 837 pairs):
+For DLT results...
+AUC@5	 AUC@10	 AUC@25	 Prec	 Recall	
+0.72	 3.52	 11.74	 79.27	 nan	
+For homography results...
+AUC@5	 AUC@10	 AUC@25	 Prec	 Recall	
+38.66	 60.85	 82.07	 79.27	 nan	
+angles abs:
+med	 mean	 std	
+0.00454	 0.00811	 0.0166	
+angles square:
+med	 mean	 std	
+2.06e-05	 0.000341	 0.00444
+```
+
+
+## superglue custom trained model
+
+```
+python match_homography_w_dataloader.py --eval True --superglue output/train/2024-02-01_superglue_model/weights/best.pt
+```
+
+## superglue indoor
+
+```
+python match_homography_w_dataloader.py --eval True --superglue indoor
+```
+
+```
+============================================
+evaluating: seen_test
+============================================
+dataset len: 90
+Evaluation Results (mean over 90 pairs):
+For DLT results...
+AUC@5	 AUC@10	 AUC@25	 Prec	 Recall	
+0.00	 0.00	 1.92	 48.41	 57.04	
+For homography results...
+AUC@5	 AUC@10	 AUC@25	 Prec	 Recall	
+20.05	 31.49	 46.62	 48.41	 57.04	
+angles abs:
+med	 mean	 std	
+0.0173	 0.767	 1.15	
+angles square:
+med	 mean	 std	
+0.000299	 1.9	 3.3	
+
+============================================
+evaluating: unseen_test
+============================================
+dataset len: 837
+Evaluation Results (mean over 837 pairs):
+For DLT results...
+AUC@5	 AUC@10	 AUC@25	 Prec	 Recall	
+0.35	 1.37	 4.64	 46.02	 nan	
+For homography results...
+AUC@5	 AUC@10	 AUC@25	 Prec	 Recall	
+20.41	 33.74	 46.95	 46.02	 nan	
+angles abs:
+med	 mean	 std	
+0.0157	 0.704	 1.02	
+angles square:
+med	 mean	 std	
+0.000247	 1.54	 2.74
+```
+
+## superglue outdoor
+
+```
+python match_homography_w_dataloader.py --eval True --superglue outdoor
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# OLD:
+
+
 # Debugging with `match_homograph.py` on tiny dataset `output_2023-11-10_100` with:
 ```
 python3 match_homography.py --eval --superglue indoor --input_homography assets/homo_output_2023-11-10_100.txt --input_dir /home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-11-10_100
@@ -209,6 +337,10 @@ angles:
 med      mean    std    
 0.00313  0.0153  0.124 
 ```
+
+# ################################################################
+# repo: https://github.com/gouthamvgk/SuperGlue_training
+# ################################################################
 
 #  SuperGlue - Reimplementation
 This repository contains training and evaluation code for Superglue model with homography pairs generated from COCO dataset. The code is adapted from the inference only [official implementation](https://github.com/magicleap/SuperGluePretrainedNetwork) released by MagicLeap

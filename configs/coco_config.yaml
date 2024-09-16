@@ -2,7 +2,10 @@ train_params:
   output_dir: output/train
   experiment_name: default
   experiment_tag: default #name for experiment in wandb logging
-  start_epoch: 0 #use -1 to resume the epoch number from restore_path ckpt given
+  
+  start_epoch: -1 
+  #! was 0 #use -1 to resume the epoch number from restore_path ckpt given
+  
   batch_size: 16 # 32 for 3090
   num_epochs: 400
   sync_bn: false #whether to sync batch norm layer in distributed training setting
@@ -13,7 +16,7 @@ train_params:
   debug_path: "debug" #folder where debug plots should be stored
   debug_iters: 10 #number of iters in each epoch for which debug plot should be made
   val_images_count: 10 #should be <= 1500. Number of images to use for computing validation score
-  use_wandb: false #whether to use wandb to log checkpoints to cloud(Useful if training in colab)
+  use_wandb: true #whether to use wandb to log checkpoints to cloud(Useful if training in colab)
   use_ema: false #whether to maintain moving average of superglue model weights that will be used in testing and inference
   init_seed: 10
 
@@ -21,7 +24,11 @@ superglue_params:
   sinkhorn_iterations: 100
   match_threshold: 0.2
   num_layers: 9
-  restore_path: #path to the ckpt from which training should be resumed
+  
+  restore_path: "output/train/2024-06-26_superglue_model_evens_crashed/weights/best.pt"
+  # ! was left empty restore_path:
+  
+  #path to the ckpt from which training should be resumed
   use_layernorm: false #whether to use layernorm instead of batchnorm in the MLP layer
   bin_value: 1.0 #initial value for dustbin in assignment
   pos_loss_weight: 0.45 #weightage for positive(matched points) components of loss
@@ -47,7 +54,7 @@ dataset_params:
   # dataset_path: "/home/sruiz/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2023-11-10_100" 
 
   #! real debugging dataset:
-  dataset_path: "/home/docker/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2024-21-06_excl_evens"
+  dataset_path: "/home/docker/datasets2/reconcycle/2023-05-23_synthetic_dataset/output_2024-06-21_excl_evens"
   apply_color_aug: true #whether to apply photometric distortions
   image_height: 480 
   image_width: 640
